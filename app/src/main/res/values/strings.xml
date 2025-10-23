@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">Payments Tracker</string>
+    <string name="total_amount_equals">Total Amount = ₹</string>
+    <string name="rupee_symbol">₹</string>
+    <string name="payments">Payments</string>
+    <string name="add_payment">Add payment</string>
+    <string name="add_payment_underlined"><u>Add payment</u></string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok_caps">OK</string>
+    <string name="amount">Amount</string>
+    <string name="provide_hint">Provider(ICICI, Citibank, etc.)</string>
+    <string name="transaction_hint">Transaction Reference</string>
+    <string name="no_payments_added_yet">No payments added yet…</string>
+    <string name="payment_removed">Payment Removed</string>
+    <string name="cd_payment_chip">Payment by %1$s Amount %2$.2f</string>
+    <string name="payment_saved">Payment Saved</string>
+    <string name="something_went_wrong">Something went wrong. Try again!</string>
+    <string name="all_payments_added_already">All payments added already</string>
+    <string name="max_amount_error">Maximum allowed amount is 999999999.99</string>
+    <string name="invalid_number">Invalid number</string>
+</resources>
