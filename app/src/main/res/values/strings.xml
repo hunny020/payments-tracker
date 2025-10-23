@@ -5,6 +5,7 @@
     <string name="payments">Payments</string>
     <string name="add_payment">Add payment</string>
     <string name="add_payment_underlined"><u>Add payment</u></string>
+    <string name="reset_underlined"><u>Reset</u></string>
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     <string name="ok_caps">OK</string>

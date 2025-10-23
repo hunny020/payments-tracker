@@ -46,9 +46,10 @@
 
     <com.google.android.material.chip.ChipGroup
         android:id="@+id/chip_group_payments"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/margin_start"
+        android:layout_marginStart="@dimen/margin_start"
+        app:singleLine="false"
         app:layout_constraintTop_toBottomOf="@id/title_payments"
         app:layout_constraintStart_toStartOf="parent"
         android:padding="16dp"/>
@@ -74,6 +75,20 @@
         app:layout_constraintStart_toStartOf="parent"/>
 
     <TextView
+        android:id="@+id/reset"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:text="@string/reset_underlined"
+        android:textColor="@color/blue_add_payment"
+        android:padding="5dp"
+        android:visibility="gone"
+        android:layout_marginEnd="@dimen/margin_start"
+        android:layout_marginTop="@dimen/margin_20"
+        app:layout_constraintTop_toBottomOf="@id/add_payment_barrier"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <TextView
         android:id="@+id/no_payments_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -87,12 +102,15 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/total_amount_title"/>
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/cta_save"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/save"
         android:layout_marginTop="@dimen/margin_50"
+        android:textColor="@color/white"
+        android:background="@color/grey"
+        app:backgroundTint="@null"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/chip_group_payments"/>
@@ -104,7 +122,8 @@
         android:layout_height="wrap_content"
         android:visibility="gone"
         android:indeterminate="true"
-        android:indeterminateTint="@color/black"
+        android:indeterminateTint="@color/white"
+        android:indeterminateTintMode="src_atop"
         app:layout_constraintStart_toStartOf="@id/cta_save"
         app:layout_constraintEnd_toEndOf="@id/cta_save"
         app:layout_constraintTop_toTopOf="@id/cta_save"

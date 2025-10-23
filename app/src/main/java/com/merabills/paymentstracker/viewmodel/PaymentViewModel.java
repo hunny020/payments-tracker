@@ -63,7 +63,7 @@ public class PaymentViewModel extends ViewModel {
         if (currentPayments == null || currentPayments.isEmpty()) return;
         List<Payment> copy = new ArrayList<>(currentPayments);
         boolean removed = false;
-        for(Payment payment : copy) {
+        for(Payment payment : currentPayments) {
             if (payment.getType() == p.getType()) {
                 copy.remove(payment);
                 removed = true;
@@ -141,6 +141,13 @@ public class PaymentViewModel extends ViewModel {
             }
         }
         return availablePaymentTypes;
+    }
+
+    public void clearPayments() {
+        if (_paymentsLD.getValue() != null) {
+            _paymentsLD.getValue().clear();
+        }
+        _paymentsLD.setValue(new ArrayList<>());
     }
 
     @Override

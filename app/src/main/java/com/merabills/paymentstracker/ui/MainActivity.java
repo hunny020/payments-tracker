@@ -1,7 +1,9 @@
 package com.merabills.paymentstracker.ui;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -9,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.merabills.paymentstracker.R;
 import com.merabills.paymentstracker.Utils;
 import com.merabills.paymentstracker.data.FilePaymentsStore;
@@ -60,17 +63,21 @@ public class MainActivity extends AppCompatActivity implements OnPaymentCreatedL
                 }
             });
         });
+
+       Utils.setDebouncedClickListener(binding.reset, view -> {
+           viewModel.clearPayments();
+       });
     }
 
     private void enableDisableSaveButton(boolean isEnable) {
         if (isEnable) {
             binding.ctaSave.setEnabled(true);
-            binding.ctaSave.setText(null);
-            binding.savePb.setVisibility(View.VISIBLE);
-        } else {
-            binding.ctaSave.setEnabled(false);
             binding.ctaSave.setText(R.string.save);
             binding.savePb.setVisibility(View.GONE);
+        } else {
+            binding.ctaSave.setEnabled(false);
+            binding.ctaSave.setText(null);
+            binding.savePb.setVisibility(View.VISIBLE);
         }
     }
 
@@ -99,16 +106,28 @@ public class MainActivity extends AppCompatActivity implements OnPaymentCreatedL
             binding.titlePayments.setVisibility(View.GONE);
             binding.chipGroupPayments.setVisibility(View.GONE);
             binding.ctaSave.setVisibility(View.GONE);
+            binding.reset.setVisibility(View.GONE);
+            binding.addPayment.setVisibility(View.VISIBLE);
             return;
         } else {
             binding.noPaymentsTitle.setVisibility(View.GONE);
             binding.chipGroupPayments.setVisibility(View.VISIBLE);
             binding.ctaSave.setVisibility(View.VISIBLE);
             binding.titlePayments.setVisibility(View.VISIBLE);
+            binding.reset.setVisibility(View.VISIBLE);
+            if (payments.size() == PaymentType.values().length) {
+                binding.addPayment.setVisibility(View.GONE);
+            } else {
+                binding.addPayment.setVisibility(View.VISIBLE);
+            }
         }
         for (Payment payment : payments) {
             Chip chip = new Chip(this);
             chip.setText(Utils.getPaymentChipText(payment));
+            ChipGroup.LayoutParams lp = new ChipGroup.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            chip.setLayoutParams(lp);
             chip.setCloseIconVisible(true);
             chip.setClickable(true);
             chip.setCheckable(false);
@@ -118,6 +137,14 @@ public class MainActivity extends AppCompatActivity implements OnPaymentCreatedL
             });
             chip.setContentDescription(getString(R.string.cd_payment_chip, payment.getType().name(), payment.getAmount()));
             binding.chipGroupPayments.addView(chip);
+
+            View spacer = new View(this);
+            ChipGroup.LayoutParams spacerLp = new ChipGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    1); // 1px tall spacer (or 0)
+            spacer.setLayoutParams(spacerLp);
+            spacer.setVisibility(View.INVISIBLE); // invisible but occupies full width
+            binding.chipGroupPayments.addView(spacer);
         }
     }
 
@@ -129,5 +156,11 @@ public class MainActivity extends AppCompatActivity implements OnPaymentCreatedL
     @Override
     public void onPaymentCreated(Payment payment) {
         viewModel.addPayment(payment);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.v("harry", "destroy");
     }
 }
