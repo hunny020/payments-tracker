@@ -1,6 +1,8 @@
 package com.merabills.paymentstracker.ui;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,11 +32,13 @@ public class MainActivity extends AppCompatActivity implements OnPaymentCreatedL
 
     private ActivityMainBinding binding;
     private PaymentViewModel viewModel;
+    private Handler uiHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
+        if (getSupportActionBar() != null) getSupportActionBar().hide();
         setContentView(binding.getRoot());
         viewModel = new ViewModelProvider(this, new PaymentViewModelFactory(new FilePaymentsStore(getApplicationContext()))).get(PaymentViewModel.class);
         setClickListeners();
@@ -52,14 +56,18 @@ public class MainActivity extends AppCompatActivity implements OnPaymentCreatedL
             viewModel.savePayment(new GenericCallback() {
                 @Override
                 public void onSuccess() {
-                    enableDisableSaveButton(true);
-                    Toast.makeText(binding.ctaSave.getContext(), R.string.payment_saved, Toast.LENGTH_SHORT).show();
+                    uiHandler.post(() -> {
+                        enableDisableSaveButton(true);
+                        Toast.makeText(binding.ctaSave.getContext(), R.string.payment_saved, Toast.LENGTH_SHORT).show();
+                    });
                 }
 
                 @Override
                 public void onFailure(String message) {
-                    enableDisableSaveButton(true);
-                    Toast.makeText(binding.ctaSave.getContext(), R.string.something_went_wrong, Toast.LENGTH_SHORT).show();
+                    uiHandler.post(() -> {
+                        enableDisableSaveButton(true);
+                        Toast.makeText(binding.ctaSave.getContext(), R.string.something_went_wrong, Toast.LENGTH_SHORT).show();
+                    });
                 }
             });
         });

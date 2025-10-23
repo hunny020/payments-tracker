@@ -1,7 +1,11 @@
 package com.merabills.paymentstracker;
 
+import android.os.Looper;
 import android.os.SystemClock;
 import android.view.View;
+
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.merabills.paymentstracker.model.Payment;
 
@@ -52,5 +56,13 @@ public final class Utils {
     public static String getUserVisibleAmount(Double amount) {
         DecimalFormat df = new DecimalFormat("###.##");
         return df.format(amount);
+    }
+
+    public static <T> void changeValueLD(MutableLiveData<T> liveData, T value) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            liveData.setValue(value);
+        } else {
+            liveData.postValue(value);
+        }
     }
 }

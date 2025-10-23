@@ -1,12 +1,11 @@
 package com.merabills.paymentstracker.viewmodel;
 
-import android.os.Handler;
-import android.os.Looper;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.merabills.paymentstracker.Utils;
 import com.merabills.paymentstracker.data.PaymentsStore;
 import com.merabills.paymentstracker.helper.GenericCallback;
 import com.merabills.paymentstracker.model.Payment;
@@ -30,7 +29,6 @@ public class PaymentViewModel extends ViewModel {
     public LiveData<Boolean> dataLoadingLD = _dataLoadingLD;
 
     private ExecutorService executor = Executors.newSingleThreadExecutor();
-    private Handler uiHandler = new Handler(Looper.getMainLooper());
 
     public PaymentViewModel(PaymentsStore store) {
         this.store = store;
@@ -47,7 +45,6 @@ public class PaymentViewModel extends ViewModel {
     }
 
     public void addPayment(final Payment p) {
-        // enforce one-of-each in UI layer; double-check here to be defensive
         List<Payment> currentPayments = _paymentsLD.getValue();
         if (currentPayments == null) currentPayments = new ArrayList<>();
         for (Payment payment : currentPayments) {
@@ -87,15 +84,11 @@ public class PaymentViewModel extends ViewModel {
                 }
                 PaymentData data = new PaymentData(totalAmount, currPaymentsList);
                 store.savePaymentData(data);
-                uiHandler.post(() -> {
-                    _dataLoadingLD.setValue(false);
-                    if (callback != null) callback.onSuccess();
-                });
+                Utils.changeValueLD(_dataLoadingLD, false);
+                if (callback != null) callback.onSuccess();
             } catch (Exception e) {
-                uiHandler.post(() -> {
-                    _dataLoadingLD.setValue(false);
-                    if (callback != null) callback.onFailure(e.getMessage());
-                });
+                Utils.changeValueLD(_dataLoadingLD, false);
+                if (callback != null) callback.onFailure(e.getMessage());
             }
         });
     }
@@ -110,16 +103,11 @@ public class PaymentViewModel extends ViewModel {
             try {
                 PaymentData paymentData = store.loadPaymentData();
                 final List<Payment> paymentsList = paymentData == null || paymentData.getPayments() == null ? new ArrayList<>() : new ArrayList<>(paymentData.getPayments());
-                uiHandler.post(() -> {
-                    _paymentsLD.setValue(paymentsList);
-                    _dataLoadingLD.setValue(false);
-                });
+                Utils.changeValueLD(_paymentsLD, paymentsList);
+                Utils.changeValueLD(_dataLoadingLD, false);
             } catch (Exception e) {
-                uiHandler.post(() -> {
-                    // on error: prefer to leave empty list rather than crashing
-                    _paymentsLD.setValue(new ArrayList<>());
-                    _dataLoadingLD.setValue(false);
-                });
+                Utils.changeValueLD(_paymentsLD, new ArrayList<>());
+                Utils.changeValueLD(_dataLoadingLD, false);
             }
         });
     }
