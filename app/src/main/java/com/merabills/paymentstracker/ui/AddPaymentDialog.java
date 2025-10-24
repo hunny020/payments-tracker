@@ -1,5 +1,6 @@
 package com.merabills.paymentstracker.ui;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.text.Editable;
@@ -8,6 +9,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 
 import androidx.annotation.NonNull;
@@ -147,27 +149,6 @@ public class AddPaymentDialog extends DialogFragment {
                     binding.etAmount.setError(null);
                 }
                 //allow upto 2 decimal places
-//                String str = s.toString();
-//                if (str.contains(".")) {
-//                    int index = str.indexOf(".");
-//                    if (str.length() - index - 1 > 2) {
-//                        binding.etAmount.setText(str.substring(0, str.length() - 1));
-//                        binding.etAmount.setSelection(binding.etAmount.getText().length());
-//                    }
-//                }
-//                if (!str.isEmpty()) {
-//                    try {
-//                        double value = Double.parseDouble(str);
-//                        if (value > amountMaxValue) {
-//                            binding.etAmount.setError(getString(R.string.max_amount_error));
-//                        } else {
-//                            binding.etAmount.setError(null);
-//                        }
-//                    } catch (NumberFormatException e) {
-//                        binding.etAmount.setError(getString(R.string.invalid_number));
-//                    }
-//                }
-
 
                 if (input.isEmpty() || input.equals(".")) {
                     binding.etAmount.setError(null);
@@ -227,6 +208,21 @@ public class AddPaymentDialog extends DialogFragment {
             getDialog().getWindow()
                     .setLayout(ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Dialog d = getDialog();
+        if (d != null && d.getWindow() != null) {
+            d.getWindow().setLayout(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+            d.getWindow().setSoftInputMode(
+                    WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+            );
         }
     }
 
