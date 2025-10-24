@@ -3,10 +3,11 @@ package com.merabills.paymentstracker.ui;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+
+import java.lang.ref.WeakReference;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -32,7 +33,8 @@ public class MainActivity extends AppCompatActivity implements OnPaymentCreatedL
 
     private ActivityMainBinding binding;
     private PaymentViewModel viewModel;
-    private Handler uiHandler = new Handler(Looper.getMainLooper());
+    private final Handler uiHandler = new Handler(Looper.getMainLooper());
+    private final WeakReference<MainActivity> activityRef = new WeakReference<>(this);
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -57,16 +59,23 @@ public class MainActivity extends AppCompatActivity implements OnPaymentCreatedL
                 @Override
                 public void onSuccess() {
                     uiHandler.post(() -> {
-                        enableDisableSaveButton(true);
-                        Toast.makeText(binding.ctaSave.getContext(), R.string.payment_saved, Toast.LENGTH_SHORT).show();
+                        MainActivity activity = activityRef.get();
+                        if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                            activity.enableDisableSaveButton(true);
+                            Toast.makeText(activity, R.string.payment_saved, Toast.LENGTH_SHORT).show();
+                        }
                     });
                 }
 
                 @Override
                 public void onFailure(String message) {
                     uiHandler.post(() -> {
-                        enableDisableSaveButton(true);
-                        Toast.makeText(binding.ctaSave.getContext(), R.string.something_went_wrong, Toast.LENGTH_SHORT).show();
+                        MainActivity activity = activityRef.get();
+                        if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                            activity.enableDisableSaveButton(true);
+                            String errorMessage = (message != null && !message.isEmpty()) ? message : getString(R.string.something_went_wrong);
+                            Toast.makeText(activity, errorMessage, Toast.LENGTH_SHORT).show();
+                        }
                     });
                 }
             });
@@ -108,21 +117,16 @@ public class MainActivity extends AppCompatActivity implements OnPaymentCreatedL
     }
 
     private void updateChipsGroup(List<Payment> payments) {
+        if (binding == null) return;
+        
         binding.chipGroupPayments.removeAllViews();
         if (payments == null || payments.isEmpty()) {
-            binding.noPaymentsTitle.setVisibility(View.VISIBLE);
-            binding.titlePayments.setVisibility(View.GONE);
-            binding.chipGroupPayments.setVisibility(View.GONE);
-            binding.ctaSave.setVisibility(View.GONE);
-            binding.reset.setVisibility(View.GONE);
-            binding.addPayment.setVisibility(View.VISIBLE);
+            Utils.setViewsVisible(binding.noPaymentsTitle, binding.addPayment);
+            Utils.setViewsGone(binding.titlePayments, binding.chipGroupPayments, binding.ctaSave, binding.reset);
             return;
         } else {
+            Utils.setViewsVisible(binding.chipGroupPayments, binding.ctaSave, binding.titlePayments, binding.reset);
             binding.noPaymentsTitle.setVisibility(View.GONE);
-            binding.chipGroupPayments.setVisibility(View.VISIBLE);
-            binding.ctaSave.setVisibility(View.VISIBLE);
-            binding.titlePayments.setVisibility(View.VISIBLE);
-            binding.reset.setVisibility(View.VISIBLE);
             if (payments.size() == PaymentType.values().length) {
                 binding.addPayment.setVisibility(View.GONE);
             } else {
@@ -130,11 +134,11 @@ public class MainActivity extends AppCompatActivity implements OnPaymentCreatedL
             }
         }
         for (Payment payment : payments) {
+            if (payment == null) continue;
+            
             Chip chip = new Chip(this);
             chip.setText(Utils.getPaymentChipText(payment));
-            ChipGroup.LayoutParams lp = new ChipGroup.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            ChipGroup.LayoutParams lp = new ChipGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             chip.setLayoutParams(lp);
             chip.setCloseIconVisible(true);
             chip.setClickable(true);
@@ -143,13 +147,14 @@ public class MainActivity extends AppCompatActivity implements OnPaymentCreatedL
                 viewModel.removePayment(payment);
                 Toast.makeText(this, R.string.payment_removed, Toast.LENGTH_SHORT).show();
             });
-            chip.setContentDescription(getString(R.string.cd_payment_chip, payment.getType().name(), payment.getAmount()));
+            
+            String typeName = payment.getType() != null ? payment.getType().name() : "Unknown";
+            String amount = payment.getAmount() != null ? payment.getAmount().toString() : "0";
+            chip.setContentDescription(getString(R.string.cd_payment_chip, typeName, amount));
             binding.chipGroupPayments.addView(chip);
 
             View spacer = new View(this);
-            ChipGroup.LayoutParams spacerLp = new ChipGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    1); // 1px tall spacer (or 0)
+            ChipGroup.LayoutParams spacerLp = new ChipGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1); // dummy spacer
             spacer.setLayoutParams(spacerLp);
             spacer.setVisibility(View.INVISIBLE); // invisible but occupies full width
             binding.chipGroupPayments.addView(spacer);
@@ -157,6 +162,7 @@ public class MainActivity extends AppCompatActivity implements OnPaymentCreatedL
     }
 
     private void updateTotalAmount() {
+        if (binding == null) return;
         double total = viewModel.getTotalAmount();
         binding.totalAmountValue.setText(Utils.getUserVisibleAmount(total));
     }
@@ -169,6 +175,7 @@ public class MainActivity extends AppCompatActivity implements OnPaymentCreatedL
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Log.v("harry", "destroy");
+        uiHandler.removeCallbacksAndMessages(null);
+        binding = null;
     }
 }

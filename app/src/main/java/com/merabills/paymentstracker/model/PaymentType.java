@@ -21,7 +21,7 @@ public enum PaymentType {
                 return type;
             }
         }
-        return null; // or throw an exception if preferred
+        return null;
     }
 
 }

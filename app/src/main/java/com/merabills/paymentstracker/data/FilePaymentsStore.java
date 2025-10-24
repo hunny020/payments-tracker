@@ -24,6 +24,19 @@ public class FilePaymentsStore implements PaymentsStore {
         this.context = context.getApplicationContext();
     }
 
+    /**
+     * Saves the given {@link PaymentData} object to internal storage as JSON
+     * to a private app file named {@code AppConstants.PAYMENTS_FILE_NAME}.
+     *
+     * <p>
+     * The operation is synchronized to ensure thread safety and prevent
+     * concurrent write conflicts.
+     * </p>
+     *
+     * @param paymentData the {@link PaymentData} instance containing all payment details
+     *                    to be persisted to disk.
+     * @throws IOException if an I/O error occurs while writing the file.
+     */
     @Override
     public synchronized void savePaymentData(PaymentData paymentData) throws IOException {
         String json = gson.toJson(paymentData);
@@ -32,6 +45,19 @@ public class FilePaymentsStore implements PaymentsStore {
         }
     }
 
+    /**
+     * Loads the previously saved {@link PaymentData} object from internal storage
+     * from the file named {@code AppConstants.PAYMENTS_FILE_NAME}
+     *
+     * <p>
+     * The operation is synchronized to ensure thread safety and prevent
+     * concurrent read/write conflicts.
+     * </p>
+     *
+     * @return a {@link PaymentData} instance containing the saved payment details,
+     *         or {@code null} if no saved data exists.
+     * @throws IOException if an error occurs while reading the file or parsing JSON.
+     */
     @Override
     public synchronized PaymentData loadPaymentData() throws IOException {
         File file = new File(context.getFilesDir(), AppConstants.PAYMENTS_FILE_NAME);

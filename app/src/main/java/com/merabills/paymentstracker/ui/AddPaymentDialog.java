@@ -1,6 +1,5 @@
 package com.merabills.paymentstracker.ui;
 
-import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.text.Editable;
@@ -9,8 +8,8 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,6 +17,7 @@ import androidx.fragment.app.DialogFragment;
 
 import com.merabills.paymentstracker.AppConstants;
 import com.merabills.paymentstracker.R;
+import com.merabills.paymentstracker.Utils;
 import com.merabills.paymentstracker.databinding.DialogAddPaymentBinding;
 import com.merabills.paymentstracker.helper.OnPaymentCreatedListener;
 import com.merabills.paymentstracker.model.Payment;
@@ -28,11 +28,10 @@ import java.util.ArrayList;
 
 public class AddPaymentDialog extends DialogFragment {
 
-    private OnPaymentCreatedListener listener;
     public static final String TAG = "AddPaymentDialog";
+    private OnPaymentCreatedListener listener;
     private DialogAddPaymentBinding binding;
     private ArrayList<PaymentType> availablePaymentTypes;
-    private final Double amountMaxValue = 999999999.99;
 
     public static AddPaymentDialog newInstance(ArrayList<PaymentType> availableTypes) {
         AddPaymentDialog dialog = new AddPaymentDialog();
@@ -58,14 +57,18 @@ public class AddPaymentDialog extends DialogFragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = DialogAddPaymentBinding.inflate(getLayoutInflater());
-
-        // Setup spinner
         if (getArguments() != null) {
             availablePaymentTypes = (ArrayList<PaymentType>) getArguments().getSerializable(AppConstants.ARG_AVAILABLE_TYPES);
         } else {
             availablePaymentTypes = new ArrayList<>();
         }
+        setupUi();
+        setupClickListeners();
+        addTextChangedListeners();
+        return binding.getRoot();
+    }
 
+    private void setupUi() {
         ArrayList<String> optionNames = new ArrayList<>();
         for(PaymentType type: availablePaymentTypes) {
             optionNames.add(type.getPaymentName());
@@ -77,18 +80,13 @@ public class AddPaymentDialog extends DialogFragment {
                 optionNames);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         binding.spinnerPaymentType.setAdapter(adapter);
-
-        setupClickListeners();
-        addTextChangedListeners();
-
-        return binding.getRoot();
     }
 
     private void setupClickListeners() {
         binding.ctaOk.setOnClickListener(v -> {
             String amountStr = binding.etAmount.getText().toString().trim();
             if (TextUtils.isEmpty(amountStr)) {
-                binding.etAmount.setError("Enter amount");
+                binding.etAmount.setError(getString(R.string.enter_amount));
                 return;
             }
 
@@ -96,16 +94,21 @@ public class AddPaymentDialog extends DialogFragment {
             try {
                 amount = Double.parseDouble(amountStr);
             } catch (NumberFormatException e) {
-                binding.etAmount.setError("Invalid number");
+                binding.etAmount.setError(getString(R.string.invalid_number));
                 return;
             }
 
-            PaymentType type = PaymentType.getTypeFromPaymentName(binding.spinnerPaymentType.getSelectedItem().toString());
+            Object selectedItem = binding.spinnerPaymentType.getSelectedItem();
+            if (selectedItem == null) {
+                return;
+            }
+            PaymentType type = PaymentType.getTypeFromPaymentName(selectedItem.toString());
+            if (type == null) {
+                return;
+            }
             String provider = binding.etProvider.getText().toString().trim();
             String reference = binding.etTransactionRef.getText().toString().trim();
-
             Payment payment = new Payment(type, amount, provider, reference);
-
             if (listener != null) {
                 listener.onPaymentCreated(payment);
             }
@@ -119,11 +122,9 @@ public class AddPaymentDialog extends DialogFragment {
             public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
                 PaymentType selected = availablePaymentTypes.get(position);
                 if (selected == PaymentType.BANK_TRANSFER || selected == PaymentType.CREDIT_CARD) {
-                    binding.etProvider.setVisibility(View.VISIBLE);
-                    binding.etTransactionRef.setVisibility(View.VISIBLE);
+                    Utils.setViewsVisible(binding.etProvider, binding.etTransactionRef);
                 } else {
-                    binding.etProvider.setVisibility(View.GONE);
-                    binding.etTransactionRef.setVisibility(View.GONE);
+                    Utils.setViewsGone(binding.etProvider, binding.etTransactionRef);
                 }
             }
             @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
@@ -148,7 +149,6 @@ public class AddPaymentDialog extends DialogFragment {
                 if (!TextUtils.isEmpty(s)) {
                     binding.etAmount.setError(null);
                 }
-                //allow upto 2 decimal places
 
                 if (input.isEmpty() || input.equals(".")) {
                     binding.etAmount.setError(null);
@@ -161,38 +161,23 @@ public class AddPaymentDialog extends DialogFragment {
                     // Limit to 2 decimal digits
                     if (input.contains(".")) {
                         int index = input.indexOf(".");
-                        if (input.length() - index - 1 > 2) {
-                            // Restore previous value if too many decimals
-                            binding.etAmount.removeTextChangedListener(this);
-                            binding.etAmount.setText(previousValue);
-                            binding.etAmount.setSelection(previousValue.length());
-                            binding.etAmount.addTextChangedListener(this);
+                        if (input.length() - index - 1 > AppConstants.MAX_DECIMAL_PLACES) {
+                            restorePreviousAmountValue(binding.etAmount, previousValue, this);
                             return;
                         }
                     }
 
                     // Limit max value
-                    if (value > 999999999.99) {
-                        binding.etAmount.setError("Maximum allowed amount is 999999999.99");
-
-                        // Restore previous value
-                        binding.etAmount.removeTextChangedListener(this);
-                        binding.etAmount.setText(previousValue);
-                        binding.etAmount.setSelection(previousValue.length());
-                        binding.etAmount.addTextChangedListener(this);
-                        return;
+                    if (value > AppConstants.MAX_AMOUNT_VALUE) {
+                        binding.etAmount.setError(getString(R.string.max_amount_error, AppConstants.MAX_AMOUNT_VALUE));
+                        restorePreviousAmountValue(binding.etAmount, previousValue, this);
                     } else {
                         binding.etAmount.setError(null);
                     }
-
                 } catch (NumberFormatException e) {
                     // Invalid number (e.g. multiple dots)
-                    binding.etAmount.removeTextChangedListener(this);
-                    binding.etAmount.setText(previousValue);
-                    binding.etAmount.setSelection(previousValue.length());
-                    binding.etAmount.addTextChangedListener(this);
+                    restorePreviousAmountValue(binding.etAmount, previousValue, this);
                 }
-
             }
 
             @Override
@@ -200,35 +185,31 @@ public class AddPaymentDialog extends DialogFragment {
         });
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-        // Optional: Make dialog width match parent
-        if (getDialog() != null && getDialog().getWindow() != null) {
-            getDialog().getWindow()
-                    .setLayout(ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT);
-        }
+    private void restorePreviousAmountValue(EditText et, String previousValue, TextWatcher textWatcher) {
+        et.removeTextChangedListener(textWatcher);
+        et.setText(previousValue);
+        et.setSelection(previousValue.length());
+        et.addTextChangedListener(textWatcher);
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        Dialog d = getDialog();
-        if (d != null && d.getWindow() != null) {
-            d.getWindow().setLayout(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            );
-            d.getWindow().setSoftInputMode(
-                    WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
-            );
+    public void onStart() {
+        super.onStart();
+        if (getDialog() != null && getDialog().getWindow() != null) {
+            getDialog().getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
     }
 
     @Override
     public void dismiss() {
         dismissAllowingStateLoss();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+        listener = null;
     }
 }
 

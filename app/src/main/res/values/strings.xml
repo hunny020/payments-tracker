@@ -18,6 +18,7 @@
     <string name="payment_saved">Payment Saved</string>
     <string name="something_went_wrong">Something went wrong. Try again!</string>
     <string name="all_payments_added_already">All payments added already</string>
-    <string name="max_amount_error">Maximum allowed amount is 999999999.99</string>
+    <string name="max_amount_error">Maximum allowed amount is %.2f</string>
     <string name="invalid_number">Invalid number</string>
+    <string name="enter_amount">Enter amount</string>
 </resources>

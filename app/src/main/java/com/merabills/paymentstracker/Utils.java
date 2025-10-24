@@ -4,7 +4,6 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.view.View;
 
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.merabills.paymentstracker.model.Payment;
@@ -46,23 +45,60 @@ public final class Utils {
      * Convenience overload with a default debounce of 400 ms.
      */
     public static void setDebouncedClickListener(final View view, final View.OnClickListener listener) {
-        setDebouncedClickListener(view, 400L, listener);
+        setDebouncedClickListener(view, AppConstants.DEFAULT_DEBOUNCE_TIME_MS, listener);
     }
 
     public static String getPaymentChipText(Payment payment) {
         return payment.getType().getPaymentName() + ": Rs." + Utils.getUserVisibleAmount(payment.getAmount());
     }
 
+    /**
+     * Converts a {@link Double} amount into a user-visible string with up to
+     * two decimal places.
+     * <p>
+     */
     public static String getUserVisibleAmount(Double amount) {
         DecimalFormat df = new DecimalFormat("###.##");
         return df.format(amount);
     }
 
+    /**
+     * Safely updates the value of a {@link MutableLiveData} from any thread.
+     * <p>
+     * If the current thread is the main (UI) thread, this method calls
+     * {@link MutableLiveData#setValue(Object)} directly. Otherwise, it uses
+     * {@link MutableLiveData#postValue(Object)} to post the value change
+     * to the main thread asynchronously.
+     * </p>
+     *
+     */
     public static <T> void changeValueLD(MutableLiveData<T> liveData, T value) {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             liveData.setValue(value);
         } else {
             liveData.postValue(value);
+        }
+    }
+
+    /**
+     * Sets all provided views' visibility to {@link View#VISIBLE}.
+     *
+     * @param views one or more {@link View} objects to make visible.
+     */
+    public static void setViewsVisible(View... views) {
+        if (views == null) return;
+        for (View v : views) {
+            if (v != null) v.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /**
+     * Sets all provided views' visibility to {@link View#GONE}.
+     */
+    public static void setViewsGone(View... views) {
+        if (views == null) return;
+        for (View v : views) {
+            if (v != null) v.setVisibility(View.GONE);
         }
     }
 }
