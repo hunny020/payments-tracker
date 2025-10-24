@@ -149,7 +149,7 @@ public class MainActivity extends AppCompatActivity implements OnPaymentCreatedL
             });
             
             String typeName = payment.getType() != null ? payment.getType().name() : "Unknown";
-            String amount = payment.getAmount() != null ? payment.getAmount().toString() : "0";
+            Double amount = payment.getAmount() != null ? payment.getAmount() : 0.0;
             chip.setContentDescription(getString(R.string.cd_payment_chip, typeName, amount));
             binding.chipGroupPayments.addView(chip);
 
