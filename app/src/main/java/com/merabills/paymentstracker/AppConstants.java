@@ -6,7 +6,7 @@ public class AppConstants {
     public static final String PAYMENTS_FILE_NAME = "LastPayment.txt";
     
     // Bundle arguments
-    public static final String ARG_AVAILABLE_TYPES = "available_types";
+    public static final String PAYMENTS = "payments";
     
     // UI Constants
     public static final long DEFAULT_DEBOUNCE_TIME_MS = 400L;

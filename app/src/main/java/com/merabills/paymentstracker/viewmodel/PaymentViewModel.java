@@ -5,11 +5,12 @@ import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 
+import com.merabills.paymentstracker.AppConstants;
 import com.merabills.paymentstracker.Utils;
 import com.merabills.paymentstracker.data.PaymentsStore;
-import com.merabills.paymentstracker.helper.GenericCallback;
 import com.merabills.paymentstracker.model.Payment;
 import com.merabills.paymentstracker.model.PaymentData;
 import com.merabills.paymentstracker.model.PaymentType;
@@ -24,13 +25,24 @@ public class PaymentViewModel extends ViewModel {
 
     private final String TAG = "PaymentViewModel";
     private final PaymentsStore store;
+    private final SavedStateHandle savedStateHandle;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private boolean isInitialLoad = true;
 
     private final MutableLiveData<List<Payment>> _paymentsLD = new MutableLiveData<>(new ArrayList<>());
     public LiveData<List<Payment>> paymentsLD = _paymentsLD;
 
-    public PaymentViewModel(PaymentsStore store) {
+    private final MutableLiveData<Boolean> _savePaymentResult = new MutableLiveData<>(null);
+    public LiveData<Boolean> savePaymentResult = _savePaymentResult;
+
+    public PaymentViewModel(SavedStateHandle handle, PaymentsStore store) {
+        this.savedStateHandle = handle;
         this.store = store;
+        List<Payment> savedPayments = handle.get(AppConstants.PAYMENTS);
+        if (savedPayments != null) {
+            _paymentsLD.setValue(savedPayments);
+            isInitialLoad = false;
+        }
     }
 
     public double getTotalAmount() {
@@ -65,6 +77,7 @@ public class PaymentViewModel extends ViewModel {
         final List<Payment> copy = new ArrayList<>(currentPayments);
         copy.add(p);
         _paymentsLD.setValue(copy);
+        savedStateHandle.set(AppConstants.PAYMENTS, copy);
     }
 
     /**
@@ -86,13 +99,17 @@ public class PaymentViewModel extends ViewModel {
                 break; // Only remove the first match
             }
         }
-        if (removed) _paymentsLD.setValue(copy);
+        if (removed) {
+            _paymentsLD.setValue(copy);
+            savedStateHandle.set(AppConstants.PAYMENTS, copy);
+        }
+
     }
 
     /**
      * Save current payments to storage on background thread.
      */
-    public void savePayment(final GenericCallback callback) {
+    public void savePayment() {
         final List<Payment> currPaymentsList = _paymentsLD.getValue() == null ? new ArrayList<>() : new ArrayList<>(_paymentsLD.getValue());
         executor.execute(() -> {
             try {
@@ -104,12 +121,10 @@ public class PaymentViewModel extends ViewModel {
                 }
                 PaymentData data = new PaymentData(totalAmount, currPaymentsList);
                 store.savePaymentData(data);
-                if (callback != null) callback.onSuccess();
+                Utils.changeValueLD(_savePaymentResult, true);
             } catch (Exception e) {
                 Log.e(TAG, "Failed to save payments", e);
-                if (callback != null) {
-                    callback.onFailure(e.getMessage());
-                }
+                Utils.changeValueLD(_savePaymentResult, false);
             }
         });
     }
@@ -117,17 +132,21 @@ public class PaymentViewModel extends ViewModel {
     /**
      * Load payments from storage on background thread.
      */
-    public void loadPayments() {
-        executor.execute(() -> {
-            try {
-                PaymentData paymentData = store.loadPaymentData();
-                final List<Payment> paymentsList = paymentData == null || paymentData.getPayments() == null ? new ArrayList<>() : new ArrayList<>(paymentData.getPayments());
-                Utils.changeValueLD(_paymentsLD, paymentsList);
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to load payments", e);
-                Utils.changeValueLD(_paymentsLD, new ArrayList<>());
-            }
-        });
+    public void loadPaymentsIfRequired() {
+        if (isInitialLoad) {
+            isInitialLoad = false;
+            executor.execute(() -> {
+                try {
+                    PaymentData paymentData = store.loadPaymentData();
+                    final List<Payment> paymentsList = paymentData == null || paymentData.getPayments() == null ? new ArrayList<>() : new ArrayList<>(paymentData.getPayments());
+                    Utils.changeValueLD(_paymentsLD, paymentsList);
+                    savedStateHandle.set(AppConstants.PAYMENTS, paymentsList);
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to load payments", e);
+                    Utils.changeValueLD(_paymentsLD, new ArrayList<>());
+                }
+            });
+        }
     }
 
     public List<PaymentType> getAvailablePaymentTypes() {
@@ -153,6 +172,7 @@ public class PaymentViewModel extends ViewModel {
 
     public void clearPayments() {
         _paymentsLD.setValue(new ArrayList<>());
+        savedStateHandle.set(AppConstants.PAYMENTS, new ArrayList<>());
     }
 
     @Override
@@ -167,6 +187,10 @@ public class PaymentViewModel extends ViewModel {
             executor.shutdownNow();
             Thread.currentThread().interrupt();
         }
+    }
+
+    public void resetSavePaymentLD() {
+        _savePaymentResult.setValue(null);
     }
 
 }

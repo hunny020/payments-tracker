@@ -111,12 +111,19 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/total_amount_title"/>
 
+            <androidx.constraintlayout.widget.Barrier
+                android:id="@+id/cta_save_barrier"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:constraint_referenced_ids="reset,add_payment"
+                app:barrierDirection="bottom"/>
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/cta_save"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/save"
-                android:layout_marginTop="@dimen/margin_50"
+                android:layout_marginTop="@dimen/margin_20"
                 android:textColor="@color/white"
                 android:background="@color/grey"
                 app:backgroundTint="@null"
@@ -124,21 +131,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/chip_group_payments"/>
-
-            <ProgressBar
-                android:id="@+id/save_pb"
-                style="?android:attr/progressBarStyleSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                android:indeterminate="true"
-                android:indeterminateTint="@color/white"
-                android:indeterminateTintMode="src_atop"
-                app:layout_constraintStart_toStartOf="@id/cta_save"
-                app:layout_constraintEnd_toEndOf="@id/cta_save"
-                app:layout_constraintTop_toTopOf="@id/cta_save"
-                app:layout_constraintBottom_toBottomOf="@id/cta_save"/>
+                app:layout_constraintTop_toBottomOf="@id/cta_save_barrier"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>

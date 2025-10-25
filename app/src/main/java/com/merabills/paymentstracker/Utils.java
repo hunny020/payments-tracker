@@ -6,8 +6,6 @@ import android.view.View;
 
 import androidx.lifecycle.MutableLiveData;
 
-import com.merabills.paymentstracker.model.Payment;
-
 import java.text.DecimalFormat;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -48,9 +46,6 @@ public final class Utils {
         setDebouncedClickListener(view, AppConstants.DEFAULT_DEBOUNCE_TIME_MS, listener);
     }
 
-    public static String getPaymentChipText(Payment payment) {
-        return payment.getType().getPaymentName() + ": Rs." + Utils.getUserVisibleAmount(payment.getAmount());
-    }
 
     /**
      * Converts a {@link Double} amount into a user-visible string with up to

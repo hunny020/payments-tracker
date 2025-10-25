@@ -21,4 +21,9 @@
     <string name="max_amount_error">Maximum allowed amount is %.2f</string>
     <string name="invalid_number">Invalid number</string>
     <string name="enter_amount">Enter amount</string>
+    <string name="chip_text">%1$s: Rs.%2$s</string>
+    <string name="unknown">Unknown</string>
+    <string name="payment_type_cash">Cash</string>
+    <string name="payment_type_bank_transfer">Bank Transfer</string>
+    <string name="payment_type_credit_card">Credit Card</string>
 </resources>

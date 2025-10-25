@@ -1,6 +1,5 @@
 package com.merabills.paymentstracker.ui;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -14,54 +13,42 @@ import android.widget.EditText;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.merabills.paymentstracker.AppConstants;
 import com.merabills.paymentstracker.R;
 import com.merabills.paymentstracker.Utils;
 import com.merabills.paymentstracker.databinding.DialogAddPaymentBinding;
-import com.merabills.paymentstracker.helper.OnPaymentCreatedListener;
 import com.merabills.paymentstracker.model.Payment;
 import com.merabills.paymentstracker.model.PaymentType;
+import com.merabills.paymentstracker.viewmodel.PaymentViewModel;
 
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class AddPaymentDialog extends DialogFragment {
 
     public static final String TAG = "AddPaymentDialog";
-    private OnPaymentCreatedListener listener;
     private DialogAddPaymentBinding binding;
-    private ArrayList<PaymentType> availablePaymentTypes;
+    private List<PaymentType> availablePaymentTypes;
+    private PaymentViewModel viewModel;
 
-    public static AddPaymentDialog newInstance(ArrayList<PaymentType> availableTypes) {
-        AddPaymentDialog dialog = new AddPaymentDialog();
-        Bundle args = new Bundle();
-        args.putSerializable(AppConstants.ARG_AVAILABLE_TYPES, availableTypes);
-        dialog.setArguments(args);
-        return dialog;
+    public static AddPaymentDialog newInstance() {
+        return new AddPaymentDialog();
     }
 
     @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
-        if (context instanceof OnPaymentCreatedListener) {
-            listener = (OnPaymentCreatedListener) context;
-        } else if (getParentFragment() instanceof OnPaymentCreatedListener) {
-            listener = (OnPaymentCreatedListener) getParentFragment();
-        } else {
-            throw new IllegalStateException("Host must implement OnPaymentCreatedListener");
-        }
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        viewModel = new ViewModelProvider(requireActivity()).get(PaymentViewModel.class);
+        availablePaymentTypes = viewModel.getAvailablePaymentTypes();
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = DialogAddPaymentBinding.inflate(getLayoutInflater());
-        if (getArguments() != null) {
-            availablePaymentTypes = (ArrayList<PaymentType>) getArguments().getSerializable(AppConstants.ARG_AVAILABLE_TYPES);
-        } else {
-            availablePaymentTypes = new ArrayList<>();
-        }
         setupUi();
         setupClickListeners();
         addTextChangedListeners();
@@ -71,7 +58,9 @@ public class AddPaymentDialog extends DialogFragment {
     private void setupUi() {
         ArrayList<String> optionNames = new ArrayList<>();
         for(PaymentType type: availablePaymentTypes) {
-            optionNames.add(type.getPaymentName());
+            if (getContext() != null) {
+                optionNames.add(type.getPaymentName(getContext()));
+            }
         }
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
@@ -102,16 +91,14 @@ public class AddPaymentDialog extends DialogFragment {
             if (selectedItem == null) {
                 return;
             }
-            PaymentType type = PaymentType.getTypeFromPaymentName(selectedItem.toString());
+            PaymentType type = PaymentType.getTypeFromPaymentName(getContext(), selectedItem.toString());
             if (type == null) {
                 return;
             }
             String provider = binding.etProvider.getText().toString().trim();
             String reference = binding.etTransactionRef.getText().toString().trim();
             Payment payment = new Payment(type, amount, provider, reference);
-            if (listener != null) {
-                listener.onPaymentCreated(payment);
-            }
+            viewModel.addPayment(payment);
             dismiss();
         });
 
@@ -209,7 +196,6 @@ public class AddPaymentDialog extends DialogFragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
-        listener = null;
     }
 }
 

@@ -1,23 +1,28 @@
 package com.merabills.paymentstracker.model;
 
+import android.content.Context;
+import androidx.annotation.StringRes;
+import com.merabills.paymentstracker.R;
+
 public enum PaymentType {
-    CASH("Cash"),
-    BANK_TRANSFER("Bank Transfer"),
-    CREDIT_CARD("Credit Card");
+    CASH(R.string.payment_type_cash),
+    BANK_TRANSFER(R.string.payment_type_bank_transfer),
+    CREDIT_CARD(R.string.payment_type_credit_card);
 
-    private final String paymentName;
+    @StringRes
+    private final int paymentResId;
 
-    PaymentType(String paymentName) {
-        this.paymentName = paymentName;
+    PaymentType(@StringRes int paymentName) {
+        this.paymentResId = paymentName;
     }
 
-    public String getPaymentName() {
-        return paymentName;
+    public String getPaymentName(Context context) {
+        return context.getString(paymentResId);
     }
 
-    public static PaymentType getTypeFromPaymentName(String name) {
+    public static PaymentType getTypeFromPaymentName(Context context, String name) {
         for (PaymentType type : PaymentType.values()) {
-            if (type.getPaymentName().equalsIgnoreCase(name)) {
+            if (type.getPaymentName(context).equalsIgnoreCase(name)) {
                 return type;
             }
         }

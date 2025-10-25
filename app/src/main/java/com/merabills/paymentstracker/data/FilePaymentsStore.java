@@ -64,19 +64,14 @@ public class FilePaymentsStore implements PaymentsStore {
         if (!file.exists()) {
             return null;
         }
-        StringBuilder sb = new StringBuilder();
         try(FileInputStream fis = context.openFileInput(AppConstants.PAYMENTS_FILE_NAME);
             InputStreamReader isr = new InputStreamReader(fis, StandardCharsets.UTF_8);
             BufferedReader br = new BufferedReader(isr)) {
-            String currLine;
-            while ((currLine = br.readLine()) != null) {
-                sb.append(currLine);
-            }
-        }
-        try {
-            return gson.fromJson(sb.toString(), PaymentData.class);
+            return gson.fromJson(br, PaymentData.class);
         } catch (JsonSyntaxException e) {
-            throw new IOException("Json exception in reading payment file");
+            throw new IOException("Json exception in reading payment file", e);
+        } catch (RuntimeException rte) {
+            throw new IOException("Unexpected error when reading file ", rte);
         }
     }
 }

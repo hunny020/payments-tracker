@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule;
+import androidx.lifecycle.SavedStateHandle;
 
 import com.merabills.paymentstracker.data.PaymentsStore;
 import com.merabills.paymentstracker.model.Payment;
@@ -38,7 +39,7 @@ public class PaymentsViewModelTest {
 
     @Before
     public void setup() {
-        viewModel = new PaymentViewModel(fakeStore);
+        viewModel = new PaymentViewModel(new SavedStateHandle(), fakeStore);
     }
 
     @Test
